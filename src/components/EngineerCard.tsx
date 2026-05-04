@@ -3,6 +3,8 @@ type Props = {
   status: string
   caseCount: number
   isSuggested?: boolean
+  isSelected?: boolean
+  onClick?: () => void
 }
 
 export function EngineerCard({
@@ -10,6 +12,8 @@ export function EngineerCard({
   status,
   caseCount,
   isSuggested,
+  isSelected,
+  onClick,
 }: Props) {
   const statusColor =
     status === "available"
@@ -20,30 +24,31 @@ export function EngineerCard({
 
   return (
     <div
-      className={`rounded-2xl border p-5 transition ${
-        isSuggested
-          ? "border-blue-500 shadow-md ring-2 ring-blue-200"
+      onClick={onClick}
+      className={`rounded-2xl border bg-white p-5 transition ${
+        onClick ? "cursor-pointer" : ""
+      } ${
+        isSelected
+          ? "border-purple-500 ring-2 ring-purple-200"
+          : isSuggested
+          ? "border-blue-500 ring-2 ring-blue-200"
           : "border-slate-200"
       }`}
     >
       <h3 className="text-lg font-semibold text-slate-900">{name}</h3>
 
       <div className="mt-3 flex items-center justify-between">
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${statusColor}`}
-        >
+        <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusColor}`}>
           {status}
         </span>
 
-        <span className="text-sm text-slate-600">
-          {caseCount} cases
-        </span>
+        <span className="text-sm text-slate-600">{caseCount} cases</span>
       </div>
 
-      {isSuggested && (
-        <p className="mt-3 text-xs font-medium text-blue-600">
-          Next Suggested
-        </p>
+      {isSelected && <p className="mt-2 text-xs text-purple-600">Selected</p>}
+
+      {!isSelected && isSuggested && (
+        <p className="mt-2 text-xs text-blue-600">Suggested</p>
       )}
     </div>
   )

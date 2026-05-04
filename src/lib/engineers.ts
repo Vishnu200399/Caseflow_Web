@@ -19,12 +19,16 @@ export async function getSuggestedEngineer(regionCode: string) {
 export async function assignCase(
   caseNumber: string,
   regionCode: string,
-  assignerEmail: string
+  assignerEmail: string,
+  override = false,
+  overrideEngineerEmail?: string
 ) {
   const { data, error } = await supabase.rpc("assign_case", {
     p_case_number: caseNumber,
     p_region_code: regionCode,
     p_assigned_by_email: assignerEmail,
+    p_override: override,
+    p_override_engineer_email: overrideEngineerEmail,
   })
 
   return { data, error }
@@ -52,3 +56,4 @@ export async function endAux(email: string, regionCode: string) {
 
   return { data, error }
 }
+

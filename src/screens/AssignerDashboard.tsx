@@ -21,6 +21,7 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [assigning, setAssigning] = useState(false)
+  const [selectedEngineer, setSelectedEngineer] = useState<any>(null)
 
   useEffect(() => {
     loadData()
@@ -53,12 +54,15 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
 
     setAssigning(true)
 
+    const isOverride = !!selectedEngineer
+
     const { data, error } = await assignCase(
       caseNumber,
       profile.regions?.code || "",
-      profile.email
+      profile.email,
+      isOverride,
+      selectedEngineer?.email
     )
-
     setAssigning(false)
 
     if (error) {
@@ -108,6 +112,12 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
                 </button>
               </div>
 
+              {selectedEngineer && (
+  <p className="mt-2 text-sm text-purple-600">
+    Selected: {selectedEngineer.full_name}
+  </p>
+)}
+
               {message && (
                 <p className="mt-3 text-sm font-medium text-emerald-600">
                   ✅ {message}
@@ -143,6 +153,8 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
               status={eng.status}
               caseCount={eng.case_count}
               isSuggested={eng.engineer_id === suggestedId}
+              isSelected={selectedEngineer?.engineer_id === eng.engineer_id}
+              onClick={() => setSelectedEngineer(eng)}
             />
           ))}
         </section>
