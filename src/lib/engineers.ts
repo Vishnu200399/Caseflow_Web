@@ -57,3 +57,10 @@ export async function endAux(email: string, regionCode: string) {
   return { data, error }
 }
 
+export async function getExcelView(regionCode: string) {
+  const { data, error } = await supabase.rpc("get_excel_case_view", {
+    p_region_code: regionCode,
+  })
+
+  return { data, error }
+}

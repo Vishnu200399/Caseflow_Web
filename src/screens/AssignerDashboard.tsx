@@ -7,6 +7,9 @@ import {
   getSuggestedEngineer,
 } from "../lib/engineers"
 import { EngineerCard } from "../components/EngineerCard"
+import { ExcelTable } from "../components/ExcelTable"
+import { getExcelView } from "../lib/engineers"
+import { supabase } from "../lib/supabase"
 
 type Props = {
   profile: UserProfile
@@ -22,16 +25,43 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
   const [error, setError] = useState("")
   const [assigning, setAssigning] = useState(false)
   const [selectedEngineer, setSelectedEngineer] = useState<any>(null)
+  const [excelData, setExcelData] = useState<any[]>([])
+  const [showExcel, setShowExcel] = useState(false)
 
-  useEffect(() => {
-    loadData()
-  }, [])
+ useEffect(() => {
+  loadData()
+
+  const channel = supabase
+    .channel("caseflow-realtime")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "case_assignments" },
+      () => {
+        loadData()
+      }
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "engineer_status" },
+      () => {
+        loadData()
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [])
 
   const loadData = async () => {
     const region = profile.regions?.code || ""
 
     const { data: engineerData } = await getEngineersWithCounts(region)
     if (engineerData) setEngineers(engineerData)
+
+    const { data: excel } = await getExcelView(region)
+    if (excel) setExcelData(excel)
 
     const { data: suggested } = await getSuggestedEngineer(region)
     if (suggested && suggested.length > 0) {
@@ -113,10 +143,17 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
               </div>
 
               {selectedEngineer && (
-  <p className="mt-2 text-sm text-purple-600">
-    Selected: {selectedEngineer.full_name}
-  </p>
-)}
+                <p className="mt-2 text-sm text-purple-600">
+                  Selected: {selectedEngineer.full_name}
+                </p>
+              )}
+
+              <button
+                onClick={() => setShowExcel(!showExcel)}
+                className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-white"
+              >
+                {showExcel ? "Hide Excel View" : "Show Excel View"}
+              </button>
 
               {message && (
                 <p className="mt-3 text-sm font-medium text-emerald-600">
@@ -158,6 +195,11 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
             />
           ))}
         </section>
+        {showExcel && (
+          <section className="mt-6">
+            <ExcelTable data={excelData} />
+          </section>
+        )}
       </div>
     </DashboardLayout>
   )
