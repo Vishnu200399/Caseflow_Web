@@ -27,50 +27,55 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
   const [selectedEngineer, setSelectedEngineer] = useState<any>(null)
   const [excelData, setExcelData] = useState<any[]>([])
   const [showExcel, setShowExcel] = useState(false)
+  const [dataLoading, setDataLoading] = useState(false)
 
- useEffect(() => {
-  loadData()
+  useEffect(() => {
+    loadData()
 
-  const channel = supabase
-    .channel("caseflow-realtime")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "case_assignments" },
-      () => {
-        loadData()
-      }
-    )
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "engineer_status" },
-      () => {
-        loadData()
-      }
-    )
-    .subscribe()
+    const channel = supabase
+      .channel("caseflow-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "case_assignments" },
+        () => {
+          loadData()
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "engineer_status" },
+        () => {
+          loadData()
+        }
+      )
+      .subscribe()
 
-  return () => {
-    supabase.removeChannel(channel)
-  }
-}, [])
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   const loadData = async () => {
+    setDataLoading(true)
+
     const region = profile.regions?.code || ""
 
     const { data: engineerData } = await getEngineersWithCounts(region)
     if (engineerData) setEngineers(engineerData)
 
-    const { data: excel } = await getExcelView(region)
-    if (excel) setExcelData(excel)
-
     const { data: suggested } = await getSuggestedEngineer(region)
     if (suggested && suggested.length > 0) {
       setSuggestedId(suggested[0].engineer_id)
-      setSuggestedName(suggested[0].full_name)
+      setSuggestedName?.(suggested[0].full_name)
     } else {
       setSuggestedId(null)
-      setSuggestedName("No available engineer")
+      setSuggestedName?.("No available engineer")
     }
+
+    const { data: excel } = await getExcelView?.(region)
+    if (excel) setExcelData?.(excel)
+
+    setDataLoading(false)
   }
 
   const handleAssign = async () => {
@@ -104,6 +109,7 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
 
     setMessage(`Case ${caseNumber} assigned to ${assignedName}`)
     setCaseNumber("")
+    setSelectedEngineer(null)
     await loadData()
   }
 
@@ -114,6 +120,50 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
       onLogout={onLogout}
     >
       <div className="space-y-6">
+        {dataLoading && (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
+            Syncing latest dashboard data...
+          </div>
+        )}
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Total Engineers</p>
+            <h3 className="mt-2 text-3xl font-bold text-slate-900">
+              {engineers.length}
+            </h3>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Available</p>
+            <h3 className="mt-2 text-3xl font-bold text-emerald-600">
+              {engineers.filter((e) => e.status === "available").length}
+            </h3>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">On AUX</p>
+            <h3 className="mt-2 text-3xl font-bold text-yellow-600">
+              {engineers.filter((e) => e.status === "aux").length}
+            </h3>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Unavailable</p>
+            <h3 className="mt-2 text-3xl font-bold text-red-500">
+              {engineers.filter(
+                (e) => e.status !== "available" && e.status !== "aux"
+              ).length}
+            </h3>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Total Cases Today</p>
+            <h3 className="mt-2 text-3xl font-bold text-blue-600">
+              {engineers.reduce((sum, e) => sum + Number(e.case_count || 0), 0)}
+            </h3>
+          </div>
+        </section>
+
         <section className="rounded-2xl bg-white p-6 shadow-sm">
           <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
             <div>
@@ -143,9 +193,24 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
               </div>
 
               {selectedEngineer && (
-                <p className="mt-2 text-sm text-purple-600">
-                  Selected: {selectedEngineer.full_name}
-                </p>
+                <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-purple-600">
+                    Override Mode Active
+                  </p>
+
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-purple-900">
+                      Selected: {selectedEngineer.full_name}
+                    </p>
+
+                    <button
+                      onClick={() => setSelectedEngineer(null)}
+                      className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-purple-700 shadow-sm hover:bg-purple-100"
+                    >
+                      Clear Selection
+                    </button>
+                  </div>
+                </div>
               )}
 
               <button
@@ -156,15 +221,15 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
               </button>
 
               {message && (
-                <p className="mt-3 text-sm font-medium text-emerald-600">
+                <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
                   ✅ {message}
-                </p>
+                </div>
               )}
 
               {error && (
-                <p className="mt-3 text-sm font-medium text-red-500">
+                <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                   ❌ {error}
-                </p>
+                </div>
               )}
             </div>
 
@@ -182,21 +247,71 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
           </div>
         </section>
 
-        <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {engineers.map((eng) => (
-            <EngineerCard
-              key={eng.engineer_id}
-              name={eng.full_name}
-              status={eng.status}
-              caseCount={eng.case_count}
-              isSuggested={eng.engineer_id === suggestedId}
-              isSelected={selectedEngineer?.engineer_id === eng.engineer_id}
-              onClick={() => setSelectedEngineer(eng)}
-            />
-          ))}
+        <section className="rounded-2xl bg-white p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-600">Engineer Overview</p>
+              <h3 className="text-xl font-bold text-slate-900">
+                Live engineer availability
+              </h3>
+            </div>
+
+            <p className="text-sm text-slate-500">
+              {engineers.length} engineers
+            </p>
+          </div>
+
+          {engineers.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
+              <h3 className="text-lg font-semibold text-slate-900">
+                No engineers found
+              </h3>
+              <p className="mt-2 text-sm text-slate-500">
+                Engineers assigned to this region will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {engineers.map((eng) => (
+                <EngineerCard
+                  key={eng.engineer_id}
+                  name={eng.full_name}
+                  status={eng.status}
+                  caseCount={eng.case_count}
+                  auxType={eng.aux_type}
+                  auxEndsAt={eng.aux_ends_at}
+                  auxExceeded={eng.aux_exceeded}
+                  isSuggested={eng.engineer_id === suggestedId}
+                  isSelected={selectedEngineer?.engineer_id === eng.engineer_id}
+                  onClick={() => setSelectedEngineer(eng)}
+                />
+              ))}
+            </div>
+          )}
         </section>
         {showExcel && (
-          <section className="mt-6">
+          <section className="rounded-2xl bg-white p-6 shadow-sm">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-blue-600">
+                  Excel View
+                </p>
+                <h3 className="text-xl font-bold text-slate-900">
+                  Case Distribution Sheet
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Read-only view of today’s case distribution by engineer.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowExcel(false)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Hide Excel View
+              </button>
+            </div>
+
             <ExcelTable data={excelData} />
           </section>
         )}

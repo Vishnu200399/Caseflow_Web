@@ -14,6 +14,7 @@ export function EngineerDashboard({ profile, onLogout }: any) {
   const [suggestedId, setSuggestedId] = useState<string | null>(null)
   const [myStatus, setMyStatus] = useState<any>(null)
   const [message, setMessage] = useState("")
+  const [dataLoading, setDataLoading] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -28,7 +29,9 @@ export function EngineerDashboard({ profile, onLogout }: any) {
     const { data: suggested } = await getSuggestedEngineer(region)
     if (suggested && suggested.length > 0) {
       setSuggestedId(suggested[0].engineer_id)
-    }
+    }else {
+    setSuggestedId(null)
+  }
 
     const me = data?.find((e: any) => e.full_name === profile.full_name)
     setMyStatus(me)
@@ -103,24 +106,38 @@ export function EngineerDashboard({ profile, onLogout }: any) {
           </div>
 
           {message && (
-            <p className="mt-3 text-sm font-medium text-blue-600">
+            <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
               {message}
-            </p>
+            </div>
           )}
         </section>
 
         {/* ENGINEER CARDS */}
-        <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {engineers.map((eng: any) => (
-            <EngineerCard
-              key={eng.engineer_id}
-              name={eng.full_name}
-              status={eng.status}
-              caseCount={eng.case_count}
-              isSuggested={eng.engineer_id === suggestedId}
-            />
-          ))}
-        </section>
+        {engineers.length === 0 ? (
+          <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
+            <h3 className="text-lg font-semibold text-slate-900">
+              No engineers found
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">
+              Engineers assigned to this region will appear here.
+            </p>
+          </section>
+        ) : (
+          <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {engineers.map((eng) => (
+              <EngineerCard
+                key={eng.engineer_id}
+                name={eng.full_name}
+                status={eng.status}
+                caseCount={eng.case_count}
+                auxType={eng.aux_type}
+                auxEndsAt={eng.aux_ends_at}
+                auxExceeded={eng.aux_exceeded}
+                isSuggested={eng.engineer_id === suggestedId}
+              />
+            ))}
+          </section>
+        )}
       </div>
     </DashboardLayout>
   )
