@@ -5,6 +5,7 @@ type LoginScreenProps = {
   onEmailChange: (value: string) => void
   onPasswordChange: (value: string) => void
   onLogin: () => void
+  onSignupClick: () => void
 }
 
 export function LoginScreen({
@@ -14,6 +15,7 @@ export function LoginScreen({
   onEmailChange,
   onPasswordChange,
   onLogin,
+  onSignupClick,
 }: LoginScreenProps) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
@@ -48,6 +50,12 @@ export function LoginScreen({
             className="w-full rounded-lg bg-blue-600 p-3 font-medium text-white hover:bg-blue-700"
           >
             Sign In
+          </button>
+          <button
+            onClick={onSignupClick}
+            className="w-full rounded-lg border border-slate-200 p-3 font-medium text-slate-700 hover:bg-slate-50"
+          >
+            New to CASEFLOW? Request Access
           </button>
         </div>
       </div>

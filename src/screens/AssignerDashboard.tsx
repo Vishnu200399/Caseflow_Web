@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { RequestsPanel } from "../components/RequestsPanel"
 import type { UserProfile } from "../lib/profile"
 import { DashboardLayout } from "../components/DashboardLayout"
 import {
@@ -313,7 +314,9 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
             </div>
 
             <ExcelTable data={excelData} />
+            <RequestsPanel profile={profile} />
           </section>
+          
         )}
       </div>
     </DashboardLayout>

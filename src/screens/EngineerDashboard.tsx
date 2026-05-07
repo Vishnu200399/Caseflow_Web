@@ -29,9 +29,9 @@ export function EngineerDashboard({ profile, onLogout }: any) {
     const { data: suggested } = await getSuggestedEngineer(region)
     if (suggested && suggested.length > 0) {
       setSuggestedId(suggested[0].engineer_id)
-    }else {
-    setSuggestedId(null)
-  }
+    } else {
+      setSuggestedId(null)
+    }
 
     const me = data?.find((e: any) => e.full_name === profile.full_name)
     setMyStatus(me)
@@ -78,6 +78,40 @@ export function EngineerDashboard({ profile, onLogout }: any) {
     >
       <div className="space-y-6">
 
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">My Status</p>
+            <h3 className="mt-2 text-2xl font-bold text-slate-900">
+              {myStatus?.status === "available"
+                ? "Available"
+                : myStatus?.status === "aux"
+                  ? "On AUX"
+                  : myStatus?.status || "Unknown"}
+            </h3>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">My Cases Today</p>
+            <h3 className="mt-2 text-3xl font-bold text-blue-600">
+              {myStatus?.case_count || 0}
+            </h3>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Available Engineers</p>
+            <h3 className="mt-2 text-3xl font-bold text-emerald-600">
+              {engineers.filter((e) => e.status === "available").length}
+            </h3>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Team Cases Today</p>
+            <h3 className="mt-2 text-3xl font-bold text-slate-900">
+              {engineers.reduce((sum, e) => sum + Number(e.case_count || 0), 0)}
+            </h3>
+          </div>
+        </section>
+
         {/* AUX PANEL */}
         <section className="rounded-2xl bg-white p-6 shadow-sm">
           <p className="text-sm font-medium text-blue-600">AUX Control</p>
@@ -113,31 +147,50 @@ export function EngineerDashboard({ profile, onLogout }: any) {
         </section>
 
         {/* ENGINEER CARDS */}
-        {engineers.length === 0 ? (
-          <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-            <h3 className="text-lg font-semibold text-slate-900">
-              No engineers found
-            </h3>
-            <p className="mt-2 text-sm text-slate-500">
-              Engineers assigned to this region will appear here.
+        <section className="rounded-2xl bg-white p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-600">
+                Team Overview
+              </p>
+
+              <h3 className="text-xl font-bold text-slate-900">
+                Live engineer availability
+              </h3>
+            </div>
+
+            <p className="text-sm text-slate-500">
+              {engineers.length} engineers
             </p>
-          </section>
-        ) : (
-          <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {engineers.map((eng) => (
-              <EngineerCard
-                key={eng.engineer_id}
-                name={eng.full_name}
-                status={eng.status}
-                caseCount={eng.case_count}
-                auxType={eng.aux_type}
-                auxEndsAt={eng.aux_ends_at}
-                auxExceeded={eng.aux_exceeded}
-                isSuggested={eng.engineer_id === suggestedId}
-              />
-            ))}
-          </section>
-        )}
+          </div>
+
+          {engineers.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
+              <h3 className="text-lg font-semibold text-slate-900">
+                No engineers found
+              </h3>
+
+              <p className="mt-2 text-sm text-slate-500">
+                Engineers assigned to this region will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {engineers.map((eng) => (
+                <EngineerCard
+                  key={eng.engineer_id}
+                  name={eng.full_name}
+                  status={eng.status}
+                  caseCount={eng.case_count}
+                  auxType={eng.aux_type}
+                  auxEndsAt={eng.aux_ends_at}
+                  auxExceeded={eng.aux_exceeded}
+                  isSuggested={eng.engineer_id === suggestedId}
+                />
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </DashboardLayout>
   )
