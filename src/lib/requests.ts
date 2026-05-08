@@ -37,16 +37,10 @@ export async function approveSignupRequest(
   requestId: string,
   approverProfileId: string
 ) {
-  const { data, error } = await supabase
-    .from("signup_requests")
-    .update({
-      status: "approved",
-      approved_by: approverProfileId,
-      approved_at: new Date().toISOString(),
-    })
-    .eq("id", requestId)
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc("approve_signup_request", {
+    p_request_id: requestId,
+    p_approved_by: approverProfileId,
+  })
 
   return { data, error }
 }

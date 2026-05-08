@@ -6,6 +6,7 @@ import { AssignerDashboard } from "./screens/AssignerDashboard"
 import { PendingApproval } from "./screens/PendingApproval"
 import { LoginScreen } from "./screens/LoginScreen"
 import { SignupScreen } from "./screens/SignupScreen"
+import { ForgotPasswordScreen } from "./screens/ForgotPasswordScreen"
 
 function App() {
   const [email, setEmail] = useState("ravi@caseflow.com")
@@ -13,7 +14,9 @@ function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [authMode, setAuthMode] = useState<"login" | "signup" | "pending">("login")
+  const [authMode, setAuthMode] = useState<
+    "login" | "signup" | "pending" | "forgot"
+  >("login")
   const [pendingEmail, setPendingEmail] = useState("")
 
   useEffect(() => {
@@ -74,6 +77,10 @@ function App() {
     )
   }
 
+  if (authMode === "forgot") {
+  return <ForgotPasswordScreen onBackToLogin={() => setAuthMode("login")} />
+}
+
   if (authMode === "signup") {
     return (
       <SignupScreen
@@ -111,14 +118,15 @@ function App() {
 
   return (
     <LoginScreen
-      email={email}
-      password={password}
-      error={error}
-      onEmailChange={setEmail}
-      onPasswordChange={setPassword}
-      onLogin={handleLogin}
-      onSignupClick={() => setAuthMode("signup")}
-    />
+  email={email}
+  password={password}
+  error={error}
+  onEmailChange={setEmail}
+  onPasswordChange={setPassword}
+  onLogin={handleLogin}
+  onSignupClick={() => setAuthMode("signup")}
+  onForgotPasswordClick={() => setAuthMode("forgot")}
+/>
   )
 }
 

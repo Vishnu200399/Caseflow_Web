@@ -6,6 +6,7 @@ type LoginScreenProps = {
   onPasswordChange: (value: string) => void
   onLogin: () => void
   onSignupClick: () => void
+  onForgotPasswordClick: () => void
 }
 
 export function LoginScreen({
@@ -16,6 +17,7 @@ export function LoginScreen({
   onPasswordChange,
   onLogin,
   onSignupClick,
+  onForgotPasswordClick
 }: LoginScreenProps) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
@@ -42,6 +44,14 @@ export function LoginScreen({
             value={password}
             onChange={(e) => onPasswordChange(e.target.value)}
           />
+
+          <button
+            type="button"
+            onClick={onForgotPasswordClick}
+            className="text-sm font-medium text-blue-600 hover:text-blue-700"
+          >
+            Forgot password?
+          </button>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 
