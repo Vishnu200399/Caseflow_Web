@@ -20,6 +20,7 @@ export function SignupScreen({ onBackToLogin, onSubmitted }: Props) {
   )
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     loadRegions()
@@ -141,7 +142,7 @@ export function SignupScreen({ onBackToLogin, onSubmitted }: Props) {
 
           <input
             placeholder="Password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             name="signup-new-password"
             autoComplete="new-password"
             className="rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
@@ -151,7 +152,7 @@ export function SignupScreen({ onBackToLogin, onSubmitted }: Props) {
 
           <input
             placeholder="Confirm Password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             name="signup-confirm-password"
             autoComplete="new-password"
             className="rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
@@ -159,6 +160,16 @@ export function SignupScreen({ onBackToLogin, onSubmitted }: Props) {
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </div>
+
+        <label className="mt-4 flex items-center gap-2 text-sm text-slate-600">
+          <input
+            type="checkbox"
+            checked={showPassword}
+            onChange={(e) => setShowPassword(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300"
+          />
+          Show password
+        </label>
 
         <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-sm font-semibold text-slate-900">
@@ -170,8 +181,8 @@ export function SignupScreen({ onBackToLogin, onSubmitted }: Props) {
               type="button"
               onClick={() => setRequestedRole("engineer")}
               className={`rounded-xl border px-4 py-3 text-left transition ${requestedRole === "engineer"
-                  ? "border-blue-500 bg-blue-50 text-blue-700"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
             >
               <p className="font-semibold">Engineer</p>
@@ -184,8 +195,8 @@ export function SignupScreen({ onBackToLogin, onSubmitted }: Props) {
               type="button"
               onClick={() => setRequestedRole("assigner")}
               className={`rounded-xl border px-4 py-3 text-left transition ${requestedRole === "assigner"
-                  ? "border-purple-500 bg-purple-50 text-purple-700"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                ? "border-purple-500 bg-purple-50 text-purple-700"
+                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
             >
               <p className="font-semibold">Assigner</p>

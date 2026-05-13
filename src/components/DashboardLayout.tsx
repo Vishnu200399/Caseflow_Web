@@ -13,6 +13,8 @@ import type { UserProfile } from "../lib/profile"
 type DashboardLayoutProps = {
   profile: UserProfile
   viewLabel: "Engineer View" | "Assigner View"
+  activeTab: string
+  onTabChange: (tab: string) => void
   onLogout: () => void
   children: React.ReactNode
 }
@@ -20,6 +22,8 @@ type DashboardLayoutProps = {
 export function DashboardLayout({
   profile,
   viewLabel,
+  activeTab,
+  onTabChange,
   onLogout,
   children,
 }: DashboardLayoutProps) {
@@ -27,19 +31,19 @@ export function DashboardLayout({
 
   const navItems = isAssigner
     ? [
-        { label: "Dashboard", icon: LayoutDashboard, active: true },
-        { label: "Case Assignment", icon: ClipboardList },
-        { label: "Excel View", icon: Table2 },
-        { label: "Requests", icon: UserCheck },
-        { label: "Activity Log", icon: Activity },
-      ]
+      { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { key: "assignment", label: "Case Assignment", icon: ClipboardList },
+      { key: "excel", label: "Excel View", icon: Table2 },
+      { key: "requests", label: "Requests", icon: UserCheck },
+      { key: "activity", label: "Activity Log", icon: Activity },
+    ]
     : [
-        { label: "Dashboard", icon: LayoutDashboard, active: true },
-        { label: "My AUX", icon: Timer },
-        { label: "My Cases", icon: ClipboardList },
-        { label: "Excel View", icon: Table2 },
-        { label: "Activity Log", icon: Clock },
-      ]
+      { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { key: "aux", label: "My AUX", icon: Timer },
+      { key: "cases", label: "My Cases", icon: ClipboardList },
+      { key: "excel", label: "Excel View", icon: Table2 },
+      { key: "activity", label: "Activity Log", icon: Clock },
+    ]
 
   return (
     <main className="flex min-h-screen bg-slate-100">
@@ -60,12 +64,12 @@ export function DashboardLayout({
 
             return (
               <button
-                key={item.label}
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition ${
-                  item.active
+                key={item.key}
+                onClick={() => onTabChange(item.key)}
+                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition ${activeTab === item.key
                     ? "bg-blue-600 text-white shadow-lg shadow-blue-950/30"
                     : "text-slate-300 hover:bg-slate-900 hover:text-white"
-                }`}
+                  }`}
               >
                 <Icon size={18} />
                 {item.label}

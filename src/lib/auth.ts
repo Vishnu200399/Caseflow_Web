@@ -49,3 +49,9 @@ export const sendPasswordResetEmail = async (email: string) => {
     redirectTo: window.location.origin,
   })
 }
+
+export const updatePassword = async (newPassword: string) => {
+  return await supabase.auth.updateUser({
+    password: newPassword,
+  })
+}

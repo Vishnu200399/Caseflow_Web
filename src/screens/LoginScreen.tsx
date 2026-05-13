@@ -1,3 +1,6 @@
+import { useState } from "react"
+
+
 type LoginScreenProps = {
   email: string
   password: string
@@ -9,16 +12,19 @@ type LoginScreenProps = {
   onForgotPasswordClick: () => void
 }
 
-export function LoginScreen({
-  email,
-  password,
-  error,
-  onEmailChange,
-  onPasswordChange,
-  onLogin,
-  onSignupClick,
-  onForgotPasswordClick
-}: LoginScreenProps) {
+export function LoginScreen(
+  {
+    email,
+    password,
+    error,
+    onEmailChange,
+    onPasswordChange,
+    onLogin,
+    onSignupClick,
+    onForgotPasswordClick
+  }: LoginScreenProps) {
+
+    const [showPassword, setShowPassword] = useState(false)
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
@@ -38,12 +44,22 @@ export function LoginScreen({
           />
 
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Password"
             className="w-full rounded-lg border border-slate-200 p-3 outline-none focus:border-blue-500"
             value={password}
             onChange={(e) => onPasswordChange(e.target.value)}
           />
+
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              checked={showPassword}
+              onChange={(e) => setShowPassword(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300"
+            />
+            Show password
+          </label>
 
           <button
             type="button"

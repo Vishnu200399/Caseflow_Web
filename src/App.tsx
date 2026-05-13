@@ -7,6 +7,8 @@ import { PendingApproval } from "./screens/PendingApproval"
 import { LoginScreen } from "./screens/LoginScreen"
 import { SignupScreen } from "./screens/SignupScreen"
 import { ForgotPasswordScreen } from "./screens/ForgotPasswordScreen"
+import { ResetPasswordScreen } from "./screens/ResetPasswordScreen"
+import { supabase } from "./lib/supabase"
 
 function App() {
   const [email, setEmail] = useState("ravi@caseflow.com")
@@ -14,14 +16,53 @@ function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [authMode, setAuthMode] = useState<
-    "login" | "signup" | "pending" | "forgot"
-  >("login")
+ const [authMode, setAuthMode] = useState<
+  "login" | "signup" | "pending" | "forgot" | "reset"
+>("login")
   const [pendingEmail, setPendingEmail] = useState("")
 
-  useEffect(() => {
-    loadProfile()
-  }, [])
+useEffect(() => {
+  const isRecoveryUrl = () => {
+    const hashParams = new URLSearchParams(
+      window.location.hash.replace("#", "")
+    )
+
+    const queryParams = new URLSearchParams(window.location.search)
+
+    return (
+      hashParams.get("type") === "recovery" ||
+      queryParams.get("type") === "recovery" ||
+      queryParams.has("code")
+    )
+  }
+
+  const initializeApp = async () => {
+    if (isRecoveryUrl()) {
+      setAuthMode("reset")
+      setProfile(null)
+      setLoading(false)
+      return
+    }
+
+    await loadProfile()
+  }
+
+  initializeApp()
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((event) => {
+    if (event === "PASSWORD_RECOVERY") {
+      setAuthMode("reset")
+      setProfile(null)
+      setLoading(false)
+    }
+  })
+
+  return () => {
+    subscription.unsubscribe()
+  }
+}, [])
 
   const loadProfile = async () => {
     setLoading(true)
@@ -55,6 +96,17 @@ function App() {
     )
   }
 
+    if (authMode === "reset") {
+  return (
+    <ResetPasswordScreen
+      onPasswordUpdated={() => {
+        setProfile(null)
+        setAuthMode("login")
+      }}
+    />
+  )
+}
+
   if (profile) {
     if (!profile.is_approved || !profile.is_active) {
       return <PendingApproval profile={profile} />
@@ -76,6 +128,8 @@ function App() {
       />
     )
   }
+
+
 
   if (authMode === "forgot") {
   return <ForgotPasswordScreen onBackToLogin={() => setAuthMode("login")} />
