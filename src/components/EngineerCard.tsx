@@ -22,6 +22,28 @@ function formatRemaining(ms: number) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
 }
 
+const statusLabels: Record<string, string> = {
+  available: "Available",
+  aux: "On AUX",
+  leave: "Leave",
+  training: "Training",
+  out_of_shift: "Out of Shift",
+  it_issue: "IT Issue",
+  week_off: "Week Off",
+  sick_leave: "Sick Leave",
+}
+
+const statusClasses: Record<string, string> = {
+  available: "bg-emerald-100 text-emerald-700",
+  aux: "bg-yellow-100 text-yellow-700",
+  leave: "bg-red-100 text-red-700",
+  training: "bg-purple-100 text-purple-700",
+  out_of_shift: "bg-slate-200 text-slate-700",
+  it_issue: "bg-orange-100 text-orange-700",
+  week_off: "bg-slate-100 text-slate-600",
+  sick_leave: "bg-rose-100 text-rose-700",
+}
+
 export function EngineerCard({
   name,
   status,
@@ -53,12 +75,7 @@ export function EngineerCard({
     return () => clearInterval(interval)
   }, [auxEndsAt, status])
 
-  const statusColor =
-    status === "available"
-      ? "bg-emerald-100 text-emerald-700"
-      : status === "aux"
-        ? "bg-yellow-100 text-yellow-700"
-        : "bg-red-100 text-red-700"
+  
 
   return (
     <div
@@ -74,16 +91,13 @@ export function EngineerCard({
       <h3 className="text-lg font-semibold text-slate-900">{name}</h3>
 
       <div className="mt-3 flex items-center justify-between">
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${statusColor}`}>
-          {status === "available"
-            ? "Available"
-            : status === "aux"
-              ? "On AUX"
-              : status === "offline"
-                ? "Offline"
-                : status}
-        </span>
-
+        <span
+  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+    statusClasses[status] || "bg-slate-100 text-slate-600"
+  }`}
+>
+  {statusLabels[status] || status}
+</span>
         <span className="text-sm text-slate-600">{caseCount} cases</span>
       </div>
 
@@ -102,6 +116,12 @@ export function EngineerCard({
           )}
         </div>
       )}
+
+      {status !== "available" && status !== "aux" && (
+  <p className="mt-3 text-xs text-slate-500">
+    Excluded from round-robin while {statusLabels[status] || status}.
+  </p>
+)}
 
       {isSelected && <p className="mt-3 text-xs font-medium text-purple-600">Selected</p>}
 

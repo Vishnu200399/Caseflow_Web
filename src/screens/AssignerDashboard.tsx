@@ -11,6 +11,7 @@ import { EngineerCard } from "../components/EngineerCard"
 import { ExcelTable } from "../components/ExcelTable"
 import { getExcelView } from "../lib/engineers"
 import { supabase } from "../lib/supabase"
+import { setEngineerStatus, statusOptions } from "../lib/status"
 
 type Props = {
   profile: UserProfile
@@ -29,14 +30,17 @@ export function AssignerDashboard({ profile, onLogout }: Props) {
   const [excelData, setExcelData] = useState<any[]>([])
   const [dataLoading, setDataLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("dashboard")
+  const [statusMessage, setStatusMessage] = useState("")
+  const [statusError, setStatusError] = useState("")
+  const [statusUpdating, setStatusUpdating] = useState(false)
 
-const showMetrics = activeTab === "dashboard"
-const showAssignment = activeTab === "dashboard" || activeTab === "assignment"
-const showEngineerOverview =
-  activeTab === "dashboard" || activeTab === "assignment"
-const showExcelSection = activeTab === "dashboard" || activeTab === "excel"
-const showRequestsSection = activeTab === "dashboard" || activeTab === "requests"
-const showActivitySection = activeTab === "activity"
+  const showMetrics = activeTab === "dashboard"
+  const showAssignment = activeTab === "dashboard" || activeTab === "assignment"
+  const showEngineerOverview =
+    activeTab === "dashboard" || activeTab === "assignment"
+  const showExcelSection = activeTab === "dashboard" || activeTab === "excel"
+  const showRequestsSection = activeTab === "dashboard" || activeTab === "requests"
+  const showActivitySection = activeTab === "activity"
 
   useEffect(() => {
     loadData()
@@ -100,13 +104,13 @@ const showActivitySection = activeTab === "activity"
 
     const isOverride = !!selectedEngineer
 
-    const { data, error } = await assignCase(
-      caseNumber,
-      profile.regions?.code || "",
-      profile.email,
-      isOverride,
-      selectedEngineer?.email
-    )
+   const { data, error } = await assignCase({
+  caseNumber,
+  regionCode: profile.regions?.code || "",
+  assignedByEmail: profile.email,
+  isOverride: !!selectedEngineer,
+  overrideEngineerEmail: selectedEngineer?.email || null,
+})
     setAssigning(false)
 
     if (error) {
@@ -121,6 +125,41 @@ const showActivitySection = activeTab === "activity"
     setSelectedEngineer(null)
     await loadData()
   }
+
+  const handleSetEngineerStatus = async (status: any) => {
+  if (!selectedEngineer) {
+    setStatusError("Select an engineer first")
+    return
+  }
+
+  const regionCode = profile.regions?.code
+
+  if (!regionCode) {
+    setStatusError("Region not found for this profile")
+    return
+  }
+
+  setStatusMessage("")
+  setStatusError("")
+  setStatusUpdating(true)
+
+  const { error } = await setEngineerStatus({
+    actorEmail: profile.email,
+    engineerEmail: selectedEngineer.email,
+    regionCode,
+    status,
+  })
+
+  setStatusUpdating(false)
+
+  if (error) {
+    setStatusError(error.message)
+    return
+  }
+
+  setStatusMessage(`Status updated for ${selectedEngineer.full_name}`)
+  await loadData()
+}
 
   return (
     <DashboardLayout
@@ -224,6 +263,49 @@ const showActivitySection = activeTab === "activity"
                     </div>
                   </div>
                 )}
+
+                {selectedEngineer && (
+  <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+    <div className="mb-3">
+      <p className="text-sm font-semibold text-slate-900">
+        Update Selected Engineer Status
+      </p>
+
+      <p className="text-xs text-slate-500">
+        Change availability for {selectedEngineer.full_name}. Only Available engineers are included in round-robin.
+      </p>
+    </div>
+
+    <div className="flex flex-wrap gap-2">
+      {statusOptions.map((option) => (
+        <button
+          key={option.value}
+          onClick={() => handleSetEngineerStatus(option.value)}
+          disabled={statusUpdating}
+          className={`rounded-xl px-4 py-2 text-sm font-medium transition disabled:opacity-60 ${
+            selectedEngineer.status === option.value
+              ? "bg-blue-600 text-white"
+              : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+
+    {statusMessage && (
+      <p className="mt-3 text-sm font-medium text-emerald-600">
+        ✅ {statusMessage}
+      </p>
+    )}
+
+    {statusError && (
+      <p className="mt-3 text-sm font-medium text-red-600">
+        ❌ {statusError}
+      </p>
+    )}
+  </div>
+)}
 
                 {message && (
                   <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">

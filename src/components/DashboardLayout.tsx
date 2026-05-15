@@ -47,7 +47,7 @@ export function DashboardLayout({
 
   return (
     <main className="flex min-h-screen bg-slate-100">
-      <aside className="hidden w-72 flex-col bg-slate-950 px-5 py-6 text-white lg:flex">
+      <aside className="hidden h-screen w-72 flex-col bg-slate-950 px-5 py-6 text-white lg:sticky lg:top-0 lg:flex">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-400">
             CASEFLOW
@@ -58,7 +58,7 @@ export function DashboardLayout({
           </p>
         </div>
 
-        <nav className="mt-10 space-y-2">
+        <nav className="mt-8 flex-1 space-y-2 overflow-y-auto pr-1">
           {navItems.map((item) => {
             const Icon = item.icon
 
@@ -78,7 +78,7 @@ export function DashboardLayout({
           })}
         </nav>
 
-        <div className="mt-auto rounded-2xl bg-slate-900 p-4">
+        <div className="mt-6 shrink-0 rounded-2xl bg-slate-900 p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold">
               {profile.full_name
