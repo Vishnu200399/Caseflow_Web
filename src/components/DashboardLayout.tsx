@@ -12,7 +12,7 @@ import type { UserProfile } from "../lib/profile"
 
 type DashboardLayoutProps = {
   profile: UserProfile
-  viewLabel: "Engineer View" | "Assigner View"
+  viewLabel: string
   activeTab: string
   onTabChange: (tab: string) => void
   onLogout: () => void

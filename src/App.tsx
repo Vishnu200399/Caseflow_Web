@@ -9,6 +9,8 @@ import { SignupScreen } from "./screens/SignupScreen"
 import { ForgotPasswordScreen } from "./screens/ForgotPasswordScreen"
 import { ResetPasswordScreen } from "./screens/ResetPasswordScreen"
 import { supabase } from "./lib/supabase"
+import { hasActiveAssignerAccess } from "./lib/tempAssigner"
+import { AdminDashboard } from "./screens/AdminDashboard"
 
 function App() {
   const [email, setEmail] = useState("ravi@caseflow.com")
@@ -20,6 +22,7 @@ function App() {
   "login" | "signup" | "pending" | "forgot" | "reset"
 >("login")
   const [pendingEmail, setPendingEmail] = useState("")
+  const [hasTempAssignerAccess, setHasTempAssignerAccess] = useState(false)
 
 useEffect(() => {
   const isRecoveryUrl = () => {
@@ -64,13 +67,25 @@ useEffect(() => {
   }
 }, [])
 
-  const loadProfile = async () => {
-    setLoading(true)
-    const { profile } = await getCurrentProfile()
-    setProfile(profile)
-    setLoading(false)
+ const loadProfile = async () => {
+  setLoading(true)
+
+  const { profile } = await getCurrentProfile()
+  setProfile(profile)
+
+  if (profile?.email && profile.regions?.code) {
+    const { data } = await hasActiveAssignerAccess({
+      email: profile.email,
+      regionCode: profile.regions.code,
+    })
+
+    setHasTempAssignerAccess(Boolean(data))
+  } else {
+    setHasTempAssignerAccess(false)
   }
 
+  setLoading(false)
+}
   const handleLogin = async () => {
     setError("")
     const { error } = await signIn(email, password)
@@ -83,10 +98,11 @@ useEffect(() => {
     await loadProfile()
   }
 
-  const handleLogout = async () => {
-    await signOut()
-    setProfile(null)
-  }
+ const handleLogout = async () => {
+  await signOut()
+  setProfile(null)
+  setHasTempAssignerAccess(false)
+}
 
   if (loading) {
     return (
@@ -107,28 +123,39 @@ useEffect(() => {
   )
 }
 
-  if (profile) {
-    if (!profile.is_approved || !profile.is_active) {
-      return <PendingApproval profile={profile} />
-    }
+ if (profile) {
+  if (!profile.is_approved || !profile.is_active) {
+    return <PendingApproval profile={profile} />
+  }
 
-    if (profile.role === "assigner") {
-      return (
-        <AssignerDashboard
-          profile={profile}
-          onLogout={handleLogout}
-        />
-      )
-    }
-
+  if (profile.role === "admin") {
     return (
-      <EngineerDashboard
+      <AdminDashboard
         profile={profile}
         onLogout={handleLogout}
       />
     )
   }
 
+  if (profile.role === "assigner" || hasTempAssignerAccess) {
+    return (
+      <AssignerDashboard
+        profile={profile}
+        onLogout={handleLogout}
+        isTemporaryAssigner={
+          profile.role === "engineer" && hasTempAssignerAccess
+        }
+      />
+    )
+  }
+
+  return (
+    <EngineerDashboard
+      profile={profile}
+      onLogout={handleLogout}
+    />
+  )
+}
 
 
   if (authMode === "forgot") {

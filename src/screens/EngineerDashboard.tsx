@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import type { UserProfile } from "../lib/profile"
+import { requestTemporaryAssigner } from "../lib/tempAssigner"
 import { DashboardLayout } from "../components/DashboardLayout"
 import {
   getEngineersWithCounts,
@@ -23,6 +24,10 @@ export function EngineerDashboard({ profile, onLogout }: any) {
   const [statusMessage, setStatusMessage] = useState("")
   const [statusError, setStatusError] = useState("")
   const [statusUpdating, setStatusUpdating] = useState(false)
+  const [tempReason, setTempReason] = useState("")
+const [tempMessage, setTempMessage] = useState("")
+const [tempError, setTempError] = useState("")
+const [tempSubmitting, setTempSubmitting] = useState(false)
 
   const showMetrics = activeTab === "dashboard"
   const showAuxPanel = activeTab === "dashboard" || activeTab === "aux"
@@ -112,6 +117,35 @@ export function EngineerDashboard({ profile, onLogout }: any) {
     setStatusMessage("Status updated successfully")
     await loadData()
   }
+
+const handleRequestTemporaryAssigner = async () => {
+  const regionCode = profile.regions?.code
+
+  if (!regionCode) {
+    setTempError("Region not found for this profile")
+    return
+  }
+
+  setTempMessage("")
+  setTempError("")
+  setTempSubmitting(true)
+
+  const { error } = await requestTemporaryAssigner({
+    engineerEmail: profile.email,
+    regionCode,
+    reason: tempReason,
+  })
+
+  setTempSubmitting(false)
+
+  if (error) {
+    setTempError(error.message)
+    return
+  }
+
+  setTempReason("")
+  setTempMessage("Temporary assigner request submitted")
+}
 
   const statusLabels: Record<string, string> = {
   available: "Available",
@@ -217,6 +251,9 @@ const statusClasses: Record<string, string> = {
           </section>
         )}
 
+
+
+
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="mb-3">
             <p className="text-sm font-semibold text-slate-900">
@@ -255,6 +292,44 @@ const statusClasses: Record<string, string> = {
             </p>
           )}
         </div>
+
+        <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+  <div>
+    <p className="text-sm font-semibold text-slate-900">
+      Temporary Assigner Access
+    </p>
+    <p className="mt-1 text-xs text-slate-500">
+      Request assigner access for the day. An assigner must approve this request.
+    </p>
+  </div>
+
+  <textarea
+    value={tempReason}
+    onChange={(e) => setTempReason(e.target.value)}
+    placeholder="Reason for request (optional)"
+    className="mt-4 min-h-24 w-full rounded-xl border border-blue-100 bg-white px-4 py-3 text-sm outline-none focus:border-blue-400"
+  />
+
+  <button
+    onClick={handleRequestTemporaryAssigner}
+    disabled={tempSubmitting}
+    className="mt-3 rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+  >
+    {tempSubmitting ? "Submitting..." : "Request Temporary Assigner"}
+  </button>
+
+  {tempMessage && (
+    <p className="mt-3 text-sm font-medium text-emerald-600">
+      ✅ {tempMessage}
+    </p>
+  )}
+
+  {tempError && (
+    <p className="mt-3 text-sm font-medium text-red-600">
+      ❌ {tempError}
+    </p>
+  )}
+</div>
 
         {/* ENGINEER CARDS */}
         {showTeamOverview && (

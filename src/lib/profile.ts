@@ -2,10 +2,10 @@ import { supabase } from "./supabase"
 
 export type UserProfile = {
   id: string
-  auth_user_id: string
+  auth_user_id: string | null
   full_name: string
   email: string
-  role: "engineer" | "assigner"
+  role: "engineer" | "assigner" | "admin"
   is_approved: boolean
   is_active: boolean
   region_id: string
