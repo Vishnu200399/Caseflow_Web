@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
-import { getAdminUsers, type AdminUser } from "../lib/admin"
+import {
+  adminRemoveTemporaryAssigner,
+  adminUpdateUser,
+  getAdminUsers,
+  type AdminUser,
+} from "../lib/admin"
 import type { UserProfile } from "../lib/profile"
 
 type Props = {
@@ -10,6 +15,8 @@ export function AdminUsersTable({ profile }: Props) {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
   const [regionFilter, setRegionFilter] = useState("all")
@@ -41,7 +48,9 @@ export function AdminUsersTable({ profile }: Props) {
         user.email.toLowerCase().includes(search.toLowerCase())
 
       const matchesRole =
-        roleFilter === "all" || user.role === roleFilter
+        roleFilter === "all" ||
+        user.role === roleFilter ||
+        (roleFilter === "assigner" && user.has_temp_assigner_access)
 
       const matchesRegion =
         regionFilter === "all" || user.region_code === regionFilter
@@ -53,6 +62,63 @@ export function AdminUsersTable({ profile }: Props) {
   const regions = Array.from(
     new Set(users.map((user) => user.region_code).filter(Boolean))
   )
+
+  const handleUpdateUser = async (
+    user: AdminUser,
+    updates: {
+      role?: "engineer" | "assigner" | "admin" | null
+      regionCode?: string | null
+      isActive?: boolean | null
+      isApproved?: boolean | null
+      displayOrder?: number | null
+    }
+  ) => {
+    setMessage("")
+    setError("")
+    setUpdatingId(user.profile_id)
+
+    const { error } = await adminUpdateUser({
+      adminEmail: profile.email,
+      profileId: user.profile_id,
+      role: updates.role ?? null,
+      regionCode: updates.regionCode ?? null,
+      isActive: updates.isActive ?? null,
+      isApproved: updates.isApproved ?? null,
+      displayOrder: updates.displayOrder ?? null,
+    })
+
+    setUpdatingId(null)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setMessage(`Updated ${user.full_name}`)
+    await loadUsers()
+  }
+
+  const handleRemoveTempAssigner = async (user: AdminUser) => {
+    setMessage("")
+    setError("")
+    setUpdatingId(user.profile_id)
+
+    const { error } = await adminRemoveTemporaryAssigner({
+      adminEmail: profile.email,
+      profileId: user.profile_id,
+    })
+
+    setUpdatingId(null)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setMessage(`Temporary assigner access removed for ${user.full_name}`)
+    await loadUsers()
+  }
+
 
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm">
@@ -114,13 +180,19 @@ export function AdminUsersTable({ profile }: Props) {
         </div>
       )}
 
+      {message && (
+        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          ✅ {message}
+        </div>
+      )}
+
       {loading && (
         <p className="text-sm text-slate-500">Loading users...</p>
       )}
 
       {!loading && (
         <div className="overflow-x-auto rounded-2xl border border-slate-200">
-          <table className="min-w-[1100px] w-full text-left text-sm">
+          <table className="min-w-[1550px] w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">User</th>
@@ -130,6 +202,8 @@ export function AdminUsersTable({ profile }: Props) {
                 <th className="px-4 py-3">Approved</th>
                 <th className="px-4 py-3">Active</th>
                 <th className="px-4 py-3">Auth Linked</th>
+                <th className="px-4 py-3">Temporary Access</th>
+                <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
 
@@ -164,11 +238,10 @@ export function AdminUsersTable({ profile }: Props) {
 
                   <td className="px-4 py-4">
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        user.is_approved
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${user.is_approved
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-yellow-100 text-yellow-700"
+                        }`}
                     >
                       {user.is_approved ? "Approved" : "Pending"}
                     </span>
@@ -176,11 +249,10 @@ export function AdminUsersTable({ profile }: Props) {
 
                   <td className="px-4 py-4">
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        user.is_active
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${user.is_active
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-red-100 text-red-700"
+                        }`}
                     >
                       {user.is_active ? "Active" : "Inactive"}
                     </span>
@@ -188,14 +260,128 @@ export function AdminUsersTable({ profile }: Props) {
 
                   <td className="px-4 py-4">
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        user.auth_linked
-                          ? "bg-slate-900 text-white"
-                          : "bg-slate-100 text-slate-600"
-                      }`}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${user.auth_linked
+                        ? "bg-slate-900 text-white"
+                        : "bg-slate-100 text-slate-600"
+                        }`}
                     >
                       {user.auth_linked ? "Linked" : "Not Linked"}
                     </span>
+                  </td>
+
+                  <td className="px-4 py-4">
+                    {user.has_temp_assigner_access ? (
+                      <div>
+                        <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">
+                          Temp Assigner Active
+                        </span>
+
+                        {user.temp_assigner_expires_at && (
+                          <p className="mt-2 text-xs text-slate-500">
+                            Expires:{" "}
+                            {new Date(user.temp_assigner_expires_at).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                        None
+                      </span>
+                    )}
+                  </td>
+
+                  <td className="px-4 py-4">
+                    <div className="grid min-w-[360px] gap-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <select
+                          value={user.role}
+                          disabled={updatingId === user.profile_id}
+                          onChange={(e) =>
+                            handleUpdateUser(user, {
+                              role: e.target.value as "engineer" | "assigner" | "admin",
+                            })
+                          }
+                          className="rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-blue-500"
+                        >
+                          <option value="engineer">Engineer</option>
+                          <option value="assigner">Assigner</option>
+                          <option value="admin">Admin</option>
+                        </select>
+
+                        <select
+                          value={user.region_code || ""}
+                          disabled={updatingId === user.profile_id}
+                          onChange={(e) =>
+                            handleUpdateUser(user, {
+                              regionCode: e.target.value,
+                            })
+                          }
+                          className="rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-blue-500"
+                        >
+                          <option value="APAC">APAC</option>
+                          <option value="EMEA">EMEA</option>
+                          <option value="AMS">AMS</option>
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <button
+                          disabled={updatingId === user.profile_id}
+                          onClick={() =>
+                            handleUpdateUser(user, {
+                              isActive: !user.is_active,
+                            })
+                          }
+                          className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+                        >
+                          {user.is_active ? "Deactivate" : "Activate"}
+                        </button>
+
+                        <button
+                          disabled={updatingId === user.profile_id}
+                          onClick={() =>
+                            handleUpdateUser(user, {
+                              isApproved: !user.is_approved,
+                            })
+                          }
+                          className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                        >
+                          {user.is_approved ? "Set Pending" : "Approve"}
+                        </button>
+
+                        <input
+                          type="number"
+                          defaultValue={user.display_order ?? ""}
+                          disabled={updatingId === user.profile_id}
+                          onBlur={(e) =>
+                            handleUpdateUser(user, {
+                              displayOrder: e.target.value
+                                ? Number(e.target.value)
+                                : null,
+                            })
+                          }
+                          placeholder="Order"
+                          className="rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-blue-500"
+                        />
+                      </div>
+
+                      {user.has_temp_assigner_access && (
+                        <button
+                          disabled={updatingId === user.profile_id}
+                          onClick={() => handleRemoveTempAssigner(user)}
+                          className="rounded-lg bg-purple-600 px-3 py-2 text-xs font-medium text-white hover:bg-purple-700 disabled:opacity-60"
+                        >
+                          Remove Temp Assigner Access
+                        </button>
+                      )}
+
+
+
+
+                      {updatingId === user.profile_id && (
+                        <p className="text-xs text-slate-500">Updating...</p>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
