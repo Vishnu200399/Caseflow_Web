@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import {
+  adminDeleteUser,
   adminRemoveTemporaryAssigner,
   adminUpdateUser,
   getAdminUsers,
@@ -9,9 +10,10 @@ import type { UserProfile } from "../lib/profile"
 
 type Props = {
   profile: UserProfile
+  refreshKey?: number
 }
 
-export function AdminUsersTable({ profile }: Props) {
+export function AdminUsersTable({ profile, refreshKey = 0 }: Props) {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -39,7 +41,7 @@ export function AdminUsersTable({ profile }: Props) {
 
   useEffect(() => {
     loadUsers()
-  }, [])
+  }, [refreshKey])
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
@@ -119,6 +121,38 @@ export function AdminUsersTable({ profile }: Props) {
     await loadUsers()
   }
 
+
+  const handleDeleteUser = async (user: AdminUser) => {
+    const confirmed = window.confirm(
+      `Permanently delete ${user.full_name}?\n\nThis cannot be undone.\n\nIf this user has case history, deletion will be blocked and you should deactivate instead.`
+    )
+
+    if (!confirmed) return
+
+    setMessage("")
+    setError("")
+    setUpdatingId(user.profile_id)
+
+    const { data, error } = await adminDeleteUser({
+      adminEmail: profile.email,
+      profileId: user.profile_id,
+    })
+
+    setUpdatingId(null)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    if (data?.error) {
+      setError(data.error)
+      return
+    }
+
+    setMessage(`Deleted ${user.full_name}`)
+    await loadUsers()
+  }
 
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm">
@@ -291,7 +325,7 @@ export function AdminUsersTable({ profile }: Props) {
                   </td>
 
                   <td className="px-4 py-4">
-                    <div className="grid min-w-[360px] gap-2">
+                    <div className="grid min-w-[380px] gap-2">
                       <div className="grid grid-cols-2 gap-2">
                         <select
                           value={user.role}
@@ -375,7 +409,13 @@ export function AdminUsersTable({ profile }: Props) {
                         </button>
                       )}
 
-
+                      <button
+                        disabled={updatingId === user.profile_id}
+                        onClick={() => handleDeleteUser(user)}
+                        className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                      >
+                        Delete User
+                      </button>
 
 
                       {updatingId === user.profile_id && (

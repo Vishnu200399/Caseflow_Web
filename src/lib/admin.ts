@@ -61,3 +61,61 @@ export async function adminRemoveTemporaryAssigner(params: {
 
   return { data, error }
 }
+
+export async function adminCreateUser(params: {
+  adminEmail: string
+  fullName: string
+  email: string
+  password: string
+  role: "engineer" | "assigner" | "admin"
+  regionCode: "APAC" | "EMEA" | "AMS"
+  displayOrder?: number | null
+}) {
+  const { data, error } = await supabase.functions.invoke("admin-create-user", {
+    body: {
+      adminEmail: params.adminEmail,
+      fullName: params.fullName,
+      email: params.email,
+      password: params.password,
+      role: params.role,
+      regionCode: params.regionCode,
+      displayOrder: params.displayOrder ?? null,
+    },
+  })
+
+  return { data, error }
+}
+
+export async function adminDeleteUser(params: {
+  adminEmail: string
+  profileId: string
+}) {
+  const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+    body: {
+      adminEmail: params.adminEmail,
+      profileId: params.profileId,
+    },
+  })
+
+  if (error) {
+    let message = error.message
+
+    const context = (error as any).context
+
+    if (context) {
+      try {
+        const body = await context.json()
+        message = body?.error || message
+      } catch {
+        // keep default message
+      }
+    }
+
+    return {
+      data: null,
+      error: new Error(message),
+    }
+  }
+
+  return { data, error: null }
+}

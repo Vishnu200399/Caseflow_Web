@@ -1,6 +1,8 @@
+import { useState } from "react"
 import { DashboardLayout } from "../components/DashboardLayout"
-import type { UserProfile } from "../lib/profile"
 import { AdminUsersTable } from "../components/AdminUsersTable"
+import { AdminCreateUserForm } from "../components/AdminCreateUserForm"
+import type { UserProfile } from "../lib/profile"
 
 type Props = {
   profile: UserProfile
@@ -8,6 +10,7 @@ type Props = {
 }
 
 export function AdminDashboard({ profile, onLogout }: Props) {
+  const [usersRefreshKey, setUsersRefreshKey] = useState(0)
   return (
     <DashboardLayout
       profile={profile}
@@ -30,7 +33,15 @@ export function AdminDashboard({ profile, onLogout }: Props) {
           </p>
         </section>
 
-        <AdminUsersTable profile={profile} />
+        <AdminCreateUserForm
+  profile={profile}
+  onCreated={() => setUsersRefreshKey((prev) => prev + 1)}
+/>
+
+        <AdminUsersTable
+  profile={profile}
+  refreshKey={usersRefreshKey}
+/>
 
         <section className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl bg-white p-5 shadow-sm">
