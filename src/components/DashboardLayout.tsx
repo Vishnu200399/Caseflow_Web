@@ -8,6 +8,7 @@ import {
   Table2,
   Timer,
   UserCheck,
+  FileDown
 } from "lucide-react"
 import type { UserProfile } from "../lib/profile"
 
@@ -39,6 +40,7 @@ export function DashboardLayout({
       { key: "excel", label: "Excel View", icon: Table2 },
       { key: "requests", label: "Requests", icon: UserCheck },
       { key: "statistics", label: "Statistics", icon: BarChart3 },
+      { key: "reports", label: "Reports", icon: FileDown },
       { key: "activity", label: "Activity Log", icon: Activity },
     ]
     : [

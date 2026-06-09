@@ -13,6 +13,7 @@ import { getExcelView } from "../lib/engineers"
 import { supabase } from "../lib/supabase"
 import { setEngineerStatus, statusOptions } from "../lib/status"
 import { CaseProcessingStatsPanel } from "../components/CaseProcessingStatsPanel"
+import { DailyReportsPanel } from "../components/DailyReportsPanel"
 import { TemporaryAssignerRequestsPanel } from "../components/TemporaryAssignerRequestsPanel"
 
 type Props = {
@@ -48,6 +49,7 @@ export function AssignerDashboard({
   const showExcelSection = activeTab === "dashboard" || activeTab === "excel"
   const showRequestsSection = activeTab === "dashboard" || activeTab === "requests"
   const showStatisticsSection = activeTab === "dashboard" || activeTab === "statistics"
+  const showReportsSection = activeTab === "dashboard" || activeTab === "reports"
  const showActivitySection = activeTab === "activity"
 
   useEffect(() => {
@@ -76,28 +78,28 @@ export function AssignerDashboard({
     }
   }, [])
 
-  const loadData = async () => {
-    setDataLoading(true)
+ const loadData = async () => {
+  const region = profile.regions?.code || ""
 
-    const region = profile.regions?.code || ""
+  setDataLoading(true)
+  
 
-    const { data: engineerData } = await getEngineersWithCounts(region)
-    if (engineerData) setEngineers(engineerData)
+  try {
+    const { data } = await getEngineersWithCounts(region)
+    if (data) setEngineers(data)
 
     const { data: suggested } = await getSuggestedEngineer(region)
     if (suggested && suggested.length > 0) {
       setSuggestedId(suggested[0].engineer_id)
-      setSuggestedName?.(suggested[0].full_name)
-    } else {
-      setSuggestedId(null)
-      setSuggestedName?.("No available engineer")
+      setSuggestedName(suggested[0].engineer_name || "")
     }
 
-    const { data: excel } = await getExcelView?.(region)
-    if (excel) setExcelData?.(excel)
-
+    const { data: excel } = await getExcelView(region)
+    if (excel) setExcelData(excel)
+  } finally {
     setDataLoading(false)
   }
+}
 
   const handleAssign = async () => {
     setMessage("")
@@ -178,6 +180,31 @@ export function AssignerDashboard({
     onLogout={onLogout}
   >
       <div className="space-y-6">
+ 
+ {activeTab === "dashboard" && (
+  <section className="rounded-2xl bg-white p-5 shadow-sm">
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <p className="text-sm font-medium text-blue-600">Dashboard Controls</p>
+        <h2 className="text-xl font-bold text-slate-900">
+          Assigner Dashboard
+        </h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Refresh live engineers, cases, AUX status, Excel view, and statistics.
+        </p>
+      </div>
+
+      <button
+        onClick={loadData}
+        disabled={dataLoading}
+        className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {dataLoading ? "Refreshing..." : "Refresh Dashboard"}
+      </button>
+    </div>
+  </section>
+)}
+
         {isTemporaryAssigner && (
           <section className="rounded-2xl border border-purple-200 bg-purple-50 p-5 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -440,6 +467,13 @@ export function AssignerDashboard({
 
         {showStatisticsSection && (
   <CaseProcessingStatsPanel
+    actorEmail={profile.email}
+    regionCode={profile.regions?.code || ""}
+  />
+)}
+
+{showReportsSection && (
+  <DailyReportsPanel
     actorEmail={profile.email}
     regionCode={profile.regions?.code || ""}
   />

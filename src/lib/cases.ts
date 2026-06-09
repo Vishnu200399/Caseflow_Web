@@ -70,3 +70,37 @@ export async function getRegionCaseProcessingStats(params: {
     error: null,
   }
 }
+
+export type DailyCaseReportRow = {
+  case_number: string
+  engineer_name: string
+  engineer_email: string
+  assigned_by_name: string | null
+  assigned_by_email: string | null
+  assigned_at: string
+  processing_status: "pending" | "processed" | "unprocessed"
+  processing_updated_at: string | null
+  region_code: string
+  work_date: string
+  was_override: boolean
+  engineer_status_at_assignment: string | null
+}
+
+export async function getRegionDailyCaseReport(params: {
+  actorEmail: string
+  regionCode: string
+}) {
+  const { data, error } = await supabase.rpc("get_region_daily_case_report", {
+    p_actor_email: params.actorEmail,
+    p_region_code: params.regionCode,
+  })
+
+  if (error) {
+    return { data: null, error }
+  }
+
+  return {
+    data: data as DailyCaseReportRow[],
+    error: null,
+  }
+}
