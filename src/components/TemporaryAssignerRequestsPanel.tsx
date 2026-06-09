@@ -16,10 +16,9 @@ type TempRequest = {
   reason: string | null
   requested_at: string
   expires_at: string | null
-  engineer: {
-    full_name: string
-    email: string
-  } | null
+  engineer_full_name: string
+  engineer_email: string
+  region_code: string
 }
 
 export function TemporaryAssignerRequestsPanel({ profile }: Props) {
@@ -34,7 +33,10 @@ export function TemporaryAssignerRequestsPanel({ profile }: Props) {
     setLoading(true)
     setError("")
 
-    const { data, error } = await getTemporaryAssignerRequests(regionCode)
+    const { data, error } = await getTemporaryAssignerRequests({
+  actorEmail: profile.email,
+  regionCode,
+})
 
     setLoading(false)
 
@@ -146,10 +148,10 @@ export function TemporaryAssignerRequestsPanel({ profile }: Props) {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="font-semibold text-slate-900">
-                  {request.engineer?.full_name || "Unknown Engineer"}
+                  {request.engineer_full_name || "Unknown Engineer"}
                 </p>
                 <p className="text-sm text-slate-500">
-                  {request.engineer?.email}
+                  {request.engineer_email}
                 </p>
                 <p className="mt-2 text-sm text-slate-600">
                   Reason: {request.reason || "No reason provided"}

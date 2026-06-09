@@ -52,22 +52,17 @@ export async function hasActiveAssignerAccess(params: {
   return { data, error }
 }
 
-export async function getTemporaryAssignerRequests(regionCode: string) {
-  const { data, error } = await supabase
-    .from("temporary_role_requests")
-    .select(`
-      id,
-      status,
-      reason,
-      requested_at,
-      expires_at,
-      engineer:profiles!temporary_role_requests_engineer_id_fkey (
-        full_name,
-        email
-      )
-    `)
-    .eq("status", "pending")
-    .order("requested_at", { ascending: false })
+export async function getTemporaryAssignerRequests(params: {
+  actorEmail: string
+  regionCode: string
+}) {
+  const { data, error } = await supabase.rpc(
+    "get_temporary_assigner_requests",
+    {
+      p_actor_email: params.actorEmail,
+      p_region_code: params.regionCode,
+    }
+  )
 
   return { data, error }
 }

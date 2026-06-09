@@ -1,5 +1,6 @@
 import {
   Activity,
+  BarChart3,
   ClipboardList,
   Clock,
   LayoutDashboard,
@@ -10,31 +11,34 @@ import {
 } from "lucide-react"
 import type { UserProfile } from "../lib/profile"
 
+
 type DashboardLayoutProps = {
   profile: UserProfile
-  viewLabel: string
-  activeTab: string
-  onTabChange: (tab: string) => void
-  onLogout: () => void
   children: React.ReactNode
+  onLogout: () => void
+  activeTab?: string
+  onTabChange: (tab: string) => void
+  viewLabel?: string
 }
 
 export function DashboardLayout({
   profile,
-  viewLabel,
-  activeTab,
-  onTabChange,
-  onLogout,
   children,
+  onLogout,
+  activeTab = "dashboard",
+  onTabChange,
+  viewLabel,
 }: DashboardLayoutProps) {
-  const isAssigner = profile.role === "assigner"
+  const isAssigner =
+  profile.role === "assigner" || viewLabel?.includes("Assigner")
 
   const navItems = isAssigner
-    ? [
+  ? [
       { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
       { key: "assignment", label: "Case Assignment", icon: ClipboardList },
       { key: "excel", label: "Excel View", icon: Table2 },
       { key: "requests", label: "Requests", icon: UserCheck },
+      { key: "statistics", label: "Statistics", icon: BarChart3 },
       { key: "activity", label: "Activity Log", icon: Activity },
     ]
     : [

@@ -12,6 +12,7 @@ import { ExcelTable } from "../components/ExcelTable"
 import { getExcelView } from "../lib/engineers"
 import { supabase } from "../lib/supabase"
 import { setEngineerStatus, statusOptions } from "../lib/status"
+import { CaseProcessingStatsPanel } from "../components/CaseProcessingStatsPanel"
 import { TemporaryAssignerRequestsPanel } from "../components/TemporaryAssignerRequestsPanel"
 
 type Props = {
@@ -46,7 +47,8 @@ export function AssignerDashboard({
     activeTab === "dashboard" || activeTab === "assignment"
   const showExcelSection = activeTab === "dashboard" || activeTab === "excel"
   const showRequestsSection = activeTab === "dashboard" || activeTab === "requests"
-  const showActivitySection = activeTab === "activity"
+  const showStatisticsSection = activeTab === "dashboard" || activeTab === "statistics"
+ const showActivitySection = activeTab === "activity"
 
   useEffect(() => {
     loadData()
@@ -168,13 +170,13 @@ export function AssignerDashboard({
   }
 
   return (
-    <DashboardLayout
-      profile={profile}
-      viewLabel={isTemporaryAssigner ? "Temporary Assigner View" : "Assigner View"}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      onLogout={onLogout}
-    >
+  <DashboardLayout
+    profile={profile}
+    viewLabel={isTemporaryAssigner ? "Temporary Assigner View" : "Assigner View"}
+    activeTab={activeTab}
+    onTabChange={setActiveTab}
+    onLogout={onLogout}
+  >
       <div className="space-y-6">
         {isTemporaryAssigner && (
           <section className="rounded-2xl border border-purple-200 bg-purple-50 p-5 shadow-sm">
@@ -408,8 +410,6 @@ export function AssignerDashboard({
           </section>
         )}
 
-
-
         {showExcelSection && (
           <section className="rounded-2xl bg-white p-6 shadow-sm">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -437,6 +437,13 @@ export function AssignerDashboard({
             <TemporaryAssignerRequestsPanel profile={profile} />
           </>
         )}
+
+        {showStatisticsSection && (
+  <CaseProcessingStatsPanel
+    actorEmail={profile.email}
+    regionCode={profile.regions?.code || ""}
+  />
+)}
 
         {showActivitySection && (
           <section className="rounded-2xl bg-white p-6 shadow-sm">

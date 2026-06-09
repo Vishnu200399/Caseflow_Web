@@ -9,6 +9,11 @@ import {
   endAux,
 } from "../lib/engineers"
 import { EngineerCard } from "../components/EngineerCard"
+import {
+  getMyCases,
+  updateCaseProcessingStatus,
+  type MyCase,
+} from "../lib/cases"
 import { ExcelTable } from "../components/ExcelTable"
 import { getExcelView } from "../lib/engineers"
 import { setEngineerStatus, statusOptions } from "../lib/status"
@@ -18,6 +23,11 @@ export function EngineerDashboard({ profile, onLogout }: any) {
   const [suggestedId, setSuggestedId] = useState<string | null>(null)
   const [myStatus, setMyStatus] = useState<any>(null)
   const [message, setMessage] = useState("")
+  const [myCases, setMyCases] = useState<MyCase[]>([])
+const [casesLoading, setCasesLoading] = useState(false)
+const [caseStatusLoadingId, setCaseStatusLoadingId] = useState<string | null>(null)
+const [caseStatusMessage, setCaseStatusMessage] = useState("")
+const [caseStatusError, setCaseStatusError] = useState("")
   const [dataLoading, setDataLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("dashboard")
   const [excelData, setExcelData] = useState<any[]>([])
@@ -40,25 +50,41 @@ const [tempSubmitting, setTempSubmitting] = useState(false)
     loadData()
   }, [])
 
-  const loadData = async () => {
-    const region = profile.regions?.code || ""
+ const loadData = async () => {
+  const region = profile.regions?.code || ""
 
-    const { data } = await getEngineersWithCounts(region)
-    if (data) setEngineers(data)
+  const { data } = await getEngineersWithCounts(region)
+  if (data) setEngineers(data)
 
-    const { data: suggested } = await getSuggestedEngineer(region)
-    if (suggested && suggested.length > 0) {
-      setSuggestedId(suggested[0].engineer_id)
-    } else {
-      setSuggestedId(null)
-    }
-
-    const me = data?.find((e: any) => e.full_name === profile.full_name)
-    setMyStatus(me)
-
-    const { data: excel } = await getExcelView(region)
-    if (excel) setExcelData(excel)
+  const { data: suggested } = await getSuggestedEngineer(region)
+  if (suggested && suggested.length > 0) {
+    setSuggestedId(suggested[0].engineer_id)
   }
+
+  const me = data?.find((e: any) => e.full_name === profile.full_name)
+  setMyStatus(me)
+
+  setCasesLoading(true)
+  setCaseStatusError("")
+
+  try {
+    const { data: myCaseData, error: myCaseError } = await getMyCases(
+      profile.email
+    )
+
+    if (myCaseError) {
+      console.error("My cases load error:", myCaseError)
+      setCaseStatusError(myCaseError.message)
+    } else {
+      setMyCases(myCaseData || [])
+    }
+  } finally {
+    setCasesLoading(false)
+  }
+
+  const { data: excel } = await getExcelView(region)
+  if (excel) setExcelData(excel)
+}
 
 
 
@@ -94,6 +120,54 @@ const [tempSubmitting, setTempSubmitting] = useState(false)
     setMessage("AUX ended")
     await loadData()
   }
+
+  const handleCaseStatusChange = async (
+  assignmentId: string,
+  status: "processed" | "unprocessed"
+) => {
+  setCaseStatusMessage("")
+  setCaseStatusError("")
+  setCaseStatusLoadingId(assignmentId)
+
+  const { error } = await updateCaseProcessingStatus({
+    engineerEmail: profile.email,
+    assignmentId,
+    processingStatus: status,
+  })
+
+  setCaseStatusLoadingId(null)
+
+  if (error) {
+    setCaseStatusError(error.message)
+    return
+  }
+
+  setCaseStatusMessage("Case status updated successfully.")
+  await loadData()
+}
+
+const formatDateTime = (value: string | null) => {
+  if (!value) return "-"
+  return new Date(value).toLocaleString()
+}
+
+const getStatusBadgeClass = (status: string) => {
+  if (status === "processed") {
+    return "bg-emerald-50 text-emerald-700 border-emerald-200"
+  }
+
+  if (status === "unprocessed") {
+    return "bg-red-50 text-red-700 border-red-200"
+  }
+
+  return "bg-yellow-50 text-yellow-700 border-yellow-200"
+}
+
+const getStatusLabel = (status: string) => {
+  if (status === "processed") return "Processed"
+  if (status === "unprocessed") return "Unprocessed"
+  return "Pending"
+}
 
   const handleSetMyStatus = async (status: any) => {
     setStatusMessage("")
@@ -330,6 +404,158 @@ const statusClasses: Record<string, string> = {
     </p>
   )}
 </div>
+
+{/* MY CASES */}
+<section className="rounded-2xl bg-white p-6 shadow-sm">
+  <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <p className="text-sm font-medium text-blue-600">My Cases</p>
+      <h3 className="text-xl font-bold text-slate-900">
+        Update today&apos;s case processing status
+      </h3>
+      <p className="mt-1 text-sm text-slate-500">
+        Mark each assigned case as Processed or Unprocessed.
+      </p>
+    </div>
+
+    <button
+      onClick={loadData}
+      className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+    >
+      Refresh
+    </button>
+  </div>
+
+  <div className="mb-4 grid gap-4 sm:grid-cols-3">
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-sm text-slate-500">Total Assigned</p>
+      <h4 className="mt-1 text-2xl font-bold text-slate-900">
+        {myCases.length}
+      </h4>
+    </div>
+
+    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+      <p className="text-sm text-emerald-700">Processed</p>
+      <h4 className="mt-1 text-2xl font-bold text-emerald-700">
+        {myCases.filter((c) => c.processing_status === "processed").length}
+      </h4>
+    </div>
+
+    <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
+      <p className="text-sm text-red-700">Unprocessed</p>
+      <h4 className="mt-1 text-2xl font-bold text-red-700">
+        {myCases.filter((c) => c.processing_status === "unprocessed").length}
+      </h4>
+    </div>
+  </div>
+
+  {caseStatusMessage && (
+    <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+      ✅ {caseStatusMessage}
+    </div>
+  )}
+
+  {caseStatusError && (
+    <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+      ❌ {caseStatusError}
+    </div>
+  )}
+
+  {casesLoading ? (
+    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
+      Loading your cases...
+    </div>
+  ) : myCases.length === 0 ? (
+    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+      <h4 className="font-semibold text-slate-900">No cases assigned today</h4>
+      <p className="mt-1 text-sm text-slate-500">
+        Once an assigner assigns a case to you, it will appear here.
+      </p>
+    </div>
+  ) : (
+    <div className="overflow-x-auto rounded-2xl border border-slate-200">
+      <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <thead className="bg-slate-50">
+          <tr>
+            <th className="px-4 py-3 text-left font-semibold text-slate-600">
+              Case Number
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-slate-600">
+              Assigned By
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-slate-600">
+              Assigned Time
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-slate-600">
+              Current Status
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-slate-600">
+              Update Status
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-slate-600">
+              Updated At
+            </th>
+          </tr>
+        </thead>
+
+        <tbody className="divide-y divide-slate-100 bg-white">
+          {myCases.map((item) => (
+            <tr key={item.assignment_id} className="hover:bg-slate-50">
+              <td className="px-4 py-3 font-semibold text-slate-900">
+                {item.case_number}
+              </td>
+
+              <td className="px-4 py-3 text-slate-600">
+                {item.assigned_by_name || "-"}
+              </td>
+
+              <td className="px-4 py-3 text-slate-600">
+                {formatDateTime(item.assigned_at)}
+              </td>
+
+              <td className="px-4 py-3">
+                <span
+                  className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(
+                    item.processing_status
+                  )}`}
+                >
+                  {getStatusLabel(item.processing_status)}
+                </span>
+              </td>
+
+              <td className="px-4 py-3">
+                <select
+                  value={
+                    item.processing_status === "pending"
+                      ? ""
+                      : item.processing_status
+                  }
+                  disabled={caseStatusLoadingId === item.assignment_id}
+                  onChange={(e) => {
+                    const value = e.target.value as "processed" | "unprocessed"
+
+                    if (!value) return
+
+                    handleCaseStatusChange(item.assignment_id, value)
+                  }}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <option value="">Select status</option>
+                  <option value="processed">Processed</option>
+                  <option value="unprocessed">Unprocessed</option>
+                </select>
+              </td>
+
+              <td className="px-4 py-3 text-slate-600">
+                {formatDateTime(item.processing_updated_at)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</section>
 
         {/* ENGINEER CARDS */}
         {showTeamOverview && (
