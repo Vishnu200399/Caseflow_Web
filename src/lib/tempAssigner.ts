@@ -67,9 +67,9 @@ export async function getTemporaryAssignerRequests(params: {
   return { data, error }
 }
 
-export async function getActiveTemporaryAssignerAccess(params: {
-  email: string
-  regionCode: string
+export async function getActiveTemporaryAssignerAccess({
+  // email: string
+  // regionCode: string
 }) {
   const { data, error } = await supabase
     .from("temporary_role_requests")

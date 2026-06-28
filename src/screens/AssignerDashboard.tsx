@@ -55,6 +55,8 @@ export function AssignerDashboard({
   useEffect(() => {
     loadData()
 
+
+
     const channel = supabase
       .channel("caseflow-realtime")
       .on(
@@ -111,8 +113,6 @@ export function AssignerDashboard({
     }
 
     setAssigning(true)
-
-    const isOverride = !!selectedEngineer
 
     const { data, error } = await assignCase({
       caseNumber,

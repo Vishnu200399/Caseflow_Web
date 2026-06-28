@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import type { UserProfile } from "../lib/profile"
 import { requestTemporaryAssigner } from "../lib/tempAssigner"
 import { DashboardLayout } from "../components/DashboardLayout"
 import {
@@ -28,7 +27,6 @@ const [casesLoading, setCasesLoading] = useState(false)
 const [caseStatusLoadingId, setCaseStatusLoadingId] = useState<string | null>(null)
 const [caseStatusMessage, setCaseStatusMessage] = useState("")
 const [caseStatusError, setCaseStatusError] = useState("")
-  const [dataLoading, setDataLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("dashboard")
   const [excelData, setExcelData] = useState<any[]>([])
   const [statusMessage, setStatusMessage] = useState("")
@@ -221,27 +219,18 @@ const handleRequestTemporaryAssigner = async () => {
   setTempMessage("Temporary assigner request submitted")
 }
 
-  const statusLabels: Record<string, string> = {
-  available: "Available",
-  aux: "On AUX",
-  leave: "Leave",
-  training: "Training",
-  out_of_shift: "Out of Shift",
-  it_issue: "IT Issue",
-  week_off: "Week Off",
-  sick_leave: "Sick Leave",
-}
 
-const statusClasses: Record<string, string> = {
-  available: "bg-emerald-100 text-emerald-700",
-  aux: "bg-yellow-100 text-yellow-700",
-  leave: "bg-red-100 text-red-700",
-  training: "bg-purple-100 text-purple-700",
-  out_of_shift: "bg-slate-200 text-slate-700",
-  it_issue: "bg-orange-100 text-orange-700",
-  week_off: "bg-slate-100 text-slate-600",
-  sick_leave: "bg-rose-100 text-rose-700",
-}
+
+// const statusClasses: Record<string, string> = {
+//   available: "bg-emerald-100 text-emerald-700",
+//   aux: "bg-yellow-100 text-yellow-700",
+//   leave: "bg-red-100 text-red-700",
+//   training: "bg-purple-100 text-purple-700",
+//   out_of_shift: "bg-slate-200 text-slate-700",
+//   it_issue: "bg-orange-100 text-orange-700",
+//   week_off: "bg-slate-100 text-slate-600",
+//   sick_leave: "bg-rose-100 text-rose-700",
+// }
 
   return (
     <DashboardLayout
