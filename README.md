@@ -1,73 +1,180 @@
-# React + TypeScript + Vite
+# 🚀 CaseFlow
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+CaseFlow is a **Full Stack Case Assignment and Workforce Management System** built using **React, TypeScript, Vite, Supabase, and PostgreSQL**. It streamlines the process of assigning support cases to engineers while providing real-time availability tracking, fair workload distribution, and region-based access control.
 
-Currently, two official plugins are available:
+## 🌐 Live Demo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+https://caseflow-web-coral.vercel.app/
 
-## React Compiler
+## 💻 GitHub Repository
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+https://github.com/Vishnu200399/Caseflow_Web
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# ✨ Features
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 👨‍💻 Engineer
+- Secure login
+- View assigned cases
+- Update case processing status
+- Change availability status
+- AUX1 & AUX4 support with timers
+- Request Temporary Assigner access
+- View live team availability
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 📋 Assigner
+- Fair case assignment
+- Automatic engineer recommendation
+- Manual override assignment
+- Live engineer overview
+- Excel-style assignment view
+- Temporary Assigner approval
+- Daily CSV reports
+- Case processing statistics
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 👨‍💼 Admin
+- User management
+- Role management
+- Region management
+- Account approval and activation
+
+---
+
+# 🌍 Supported Regions
+
+- EMEA
+- APAC
+- AMS
+
+Each region operates independently with its own engineers, assigners, workloads, and reports.
+
+---
+
+# 🛠 Tech Stack
+
+### Frontend
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS
+- Framer Motion
+
+### Backend
+- Supabase
+- PostgreSQL
+- Supabase Authentication
+- Supabase Realtime
+- PostgreSQL RPC Functions
+
+### Deployment
+- Frontend: Vercel
+- Backend: Supabase
+
+---
+
+# 📂 Project Structure
+
+```
+CaseFlow/
+│
+├── public/
+├── src/
+│   ├── components/
+│   ├── screens/
+│   ├── lib/
+│   ├── assets/
+│   └── App.tsx
+│
+├── supabase/
+├── package.json
+├── vite.config.ts
+└── README.md
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+# 🚀 Installation
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Clone the repository
+
+```bash
+git clone https://github.com/Vishnu200399/Caseflow_Web.git
 ```
+
+Move into the project
+
+```bash
+cd Caseflow_Web
+```
+
+Install dependencies
+
+```bash
+npm install
+```
+
+Create a `.env` file
+
+```env
+VITE_SUPABASE_URL=YOUR_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+```
+
+Run locally
+
+```bash
+npm run dev
+```
+
+Build for production
+
+```bash
+npm run build
+```
+
+---
+
+# 🔑 Demo Credentials
+
+### Engineer
+
+**Email:** `ali@gmail.com`
+
+**Password:** `123456789`
+
+### Assigner
+
+**Email:** `mothi@gmail.com`
+
+**Password:** `123456789`
+
+---
+
+# 🔄 Workflow
+
+1. User logs in.
+2. Engineers update their availability.
+3. Assigner receives the next recommended engineer.
+4. Cases are assigned using fair workload distribution.
+5. Engineers update processing status.
+6. Dashboards refresh in real time.
+7. Daily reports can be exported as CSV.
+
+---
+
+# 📸 Screenshots
+
+_Add screenshots here._
+
+---
+
+# 👨‍💻 Author
+
+**Vishnu Vardhan**
+
+GitHub: https://github.com/Vishnu200399
+
+---
+
+If you found this project useful, consider giving the repository a ⭐.
